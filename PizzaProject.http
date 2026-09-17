@@ -1,6 +1,51 @@
-@PizzaProject_HostAddress = http://localhost:5214
+@PizzaProject_HostAddress = https://localhost:7254
 
-GET {{PizzaProject_HostAddress}}/weatherforecast/
+GET {{PizzaProject_HostAddress}}/pizza/
+Accept: application/json
+
+###
+
+GET {{PizzaProject_HostAddress}}/pizza/1
+Accept: application/json
+
+###
+
+GET {{PizzaProject_HostAddress}}/pizza/5
+Accept: application/json
+
+###
+
+POST {{PizzaProject_HostAddress}}/pizza/
+Content-Type: application/json
+
+{
+  "name": "Hawaii",
+  "isGlutenFree": false
+}
+
+###
+
+PUT {{PizzaProject_HostAddress}}/pizza/3
+Content-Type: application/json
+
+{
+  "id": 3,
+  "name": "Hawaiian",
+  "isGlutenFree": false
+}
+
+###
+
+GET {{PizzaProject_HostAddress}}/pizza/3
+Accept: application/json
+
+###
+
+DELETE {{PizzaProject_HostAddress}}/pizza/3
+
+###
+
+GET {{PizzaProject_HostAddress}}/pizza/
 Accept: application/json
 
 ###
