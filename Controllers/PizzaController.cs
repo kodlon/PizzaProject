@@ -5,54 +5,56 @@ using PizzaProject.Services;
 namespace PizzaProject.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-public class PizzaController : ControllerBase
+[Route("api/[controller]")]
+public class PizzaController(IPizzaService pizzaService) : ControllerBase
 {
     [HttpGet]
-    public ActionResult<List<Pizza>> GetAll() => PizzaService.GetAll();
+    public ActionResult<List<Pizza>> GetAll() => pizzaService.GetAll().ToList(); //тупо якось
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public ActionResult<Pizza> Get(int id)
     {
-        var pizza = PizzaService.Get(id);
-        if (pizza == null)
-            return NotFound();
+        if (pizzaService.TryGet(id, out var pizza))
+            return pizza;
 
-        return pizza;
+        return NotFound();
     }
 
     [HttpPost]
     public IActionResult Create(Pizza pizza)
     {
-        PizzaService.Add(pizza);
-        return CreatedAtAction(nameof(Get), new { id = pizza.Id }, pizza);
+        pizzaService.Add(pizza);
+
+        return CreatedAtAction(nameof(Get), new
+        {
+            id = pizza.Id
+        }, pizza);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     public IActionResult Update(int id, Pizza pizza)
     {
         if (id != pizza.Id)
             return BadRequest();
 
-        var existingPizza = PizzaService.Get(id);
+        var existingPizza = pizzaService.Get(id);
+
         if (existingPizza is null)
             return NotFound();
-        
-        PizzaService.Update(pizza);
+
+        pizzaService.Update(pizza);
+
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public IActionResult Delete(int id)
     {
-        var pizza = PizzaService.Get(id);
-        //Чому не добавити цю перевірку в самому сервісі? чому ми вже третій раз дублюємо цю логіку?
-        if (pizza is null)
-            return NotFound();
-        
-        PizzaService.Delete(id);
-        return NoContent();
+        if (pizzaService.Delete(id))
+            return NoContent();
+
+        return NotFound();
     }
-    
+
     //імплементувати patch і розібратись, що воно таке
 }
