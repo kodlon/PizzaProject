@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using PizzaProject.Models;
 using PizzaProject.Services;
 
@@ -9,12 +10,14 @@ namespace PizzaProject.Controllers;
 public class PizzaController(IPizzaService pizzaService) : ControllerBase
 {
     [HttpGet]
-    public ActionResult<List<Pizza>> GetAll() => pizzaService.GetAll().ToList(); //тупо якось
+    public ActionResult<IReadOnlyList<Pizza>> GetAll() => Ok(pizzaService.GetAll());
 
     [HttpGet("{id:int}")]
     public ActionResult<Pizza> Get(int id)
     {
-        if (pizzaService.TryGet(id, out var pizza))
+        var pizza = pizzaService.Get(id);
+
+        if (pizza != null)
             return pizza;
 
         return NotFound();
@@ -37,14 +40,7 @@ public class PizzaController(IPizzaService pizzaService) : ControllerBase
         if (id != pizza.Id)
             return BadRequest();
 
-        var existingPizza = pizzaService.Get(id);
-
-        if (existingPizza is null)
-            return NotFound();
-
-        pizzaService.Update(pizza);
-
-        return NoContent();
+        return pizzaService.Update(pizza) ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
@@ -56,5 +52,34 @@ public class PizzaController(IPizzaService pizzaService) : ControllerBase
         return NotFound();
     }
 
-    //імплементувати patch і розібратись, що воно таке
+    [HttpPatch("{id:int}")]
+    public IActionResult JsonPatch(int id, [FromBody] JsonPatchDocument<Pizza> patch)
+    {
+        var existingPizza = pizzaService.Get(id);
+
+        if (existingPizza is null)
+            return NotFound();
+
+        var candidatePizza = new Pizza
+        {
+            Id = existingPizza.Id,
+            Name = existingPizza.Name,
+            IsGlutenFree = existingPizza.IsGlutenFree
+        };
+
+        patch.ApplyTo(candidatePizza, ModelState);
+
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        if (candidatePizza.Id != id)
+            return BadRequest();
+
+        if (!TryValidateModel(candidatePizza))
+            return ValidationProblem(ModelState);
+
+        pizzaService.Update(candidatePizza);
+
+        return Ok(candidatePizza);
+    }
 }

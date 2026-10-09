@@ -4,7 +4,7 @@ namespace PizzaProject.Services;
 
 public class PizzaService : IPizzaService
 {
-    private List<Pizza> _pizzas { get; } =
+    private readonly List<Pizza> _pizzas =
     [
         new()
         {
@@ -22,27 +22,16 @@ public class PizzaService : IPizzaService
 
     private int _nextId;
 
-    private readonly object _lock = new();
+    public PizzaService() => _nextId = _pizzas.Max(p => p.Id) + 1; //чому не дивитись тоді просто довжину списку? хіба ід можуть повторюватись? 
 
     public IReadOnlyList<Pizza> GetAll() => _pizzas;
 
     public Pizza? Get(int id) => _pizzas.FirstOrDefault(p => p.Id == id);
 
-    public bool TryGet(int id, out Pizza pizza)
-    {
-        //Не дуже подобається, як тут правильно?
-        pizza = Get(id);
-
-        return pizza != null;
-    }
-
     public void Add(Pizza pizza)
     {
-        lock (_lock)
-        {
-            pizza.Id = _nextId++;
-            _pizzas.Add(pizza);
-        }
+        pizza.Id = _nextId++;
+        _pizzas.Add(pizza);
     }
 
     public bool Delete(int id)
@@ -57,13 +46,15 @@ public class PizzaService : IPizzaService
         return true;
     }
 
-    public void Update(Pizza pizza)
+    public bool Update(Pizza pizza)
     {
         var index = _pizzas.FindIndex(p => p.Id == pizza.Id);
 
         if (index == -1)
-            return;
+            return false;
 
         _pizzas[index] = pizza;
+
+        return true;
     }
 }

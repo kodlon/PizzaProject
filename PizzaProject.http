@@ -1,21 +1,21 @@
 @PizzaProject_HostAddress = https://localhost:7254
 
-GET {{PizzaProject_HostAddress}}/pizza/
+GET {{PizzaProject_HostAddress}}/api/pizza/
 Accept: application/json
 
 ###
 
-GET {{PizzaProject_HostAddress}}/pizza/1
+GET {{PizzaProject_HostAddress}}/api/pizza/1
 Accept: application/json
 
 ###
 
-GET {{PizzaProject_HostAddress}}/pizza/5
+GET {{PizzaProject_HostAddress}}/api/pizza/5
 Accept: application/json
 
 ###
 
-POST {{PizzaProject_HostAddress}}/pizza/
+POST {{PizzaProject_HostAddress}}/api/pizza/
 Content-Type: application/json
 
 {
@@ -25,7 +25,7 @@ Content-Type: application/json
 
 ###
 
-PUT {{PizzaProject_HostAddress}}/pizza/3
+PUT {{PizzaProject_HostAddress}}/api/pizza/3
 Content-Type: application/json
 
 {
@@ -36,16 +36,21 @@ Content-Type: application/json
 
 ###
 
-GET {{PizzaProject_HostAddress}}/pizza/3
+GET {{PizzaProject_HostAddress}}/api/pizza/3
 Accept: application/json
 
 ###
 
-DELETE {{PizzaProject_HostAddress}}/pizza/3
+DELETE {{PizzaProject_HostAddress}}/api/pizza/3
 
 ###
 
-GET {{PizzaProject_HostAddress}}/pizza/
+GET {{PizzaProject_HostAddress}}/api/pizza/
 Accept: application/json
 
 ###
+
+PATCH {{PizzaProject_HostAddress}}/api/pizza/1
+Content-Type: application/json-patch+json
+
+[{"op":"replace","path":"/name","value":"Diavola"}]
