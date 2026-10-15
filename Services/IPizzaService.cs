@@ -4,13 +4,13 @@ namespace PizzaProject.Services;
 
 public interface IPizzaService
 {
-    IReadOnlyList<Pizza> GetAll();
+    Task<IReadOnlyList<Pizza>> GetAll();
 
-    Pizza? Get(int id);
+    Task<Pizza?> Get(int id);
 
-    void Add(Pizza pizza);
+    Task Add(Pizza pizza);
 
-    bool Delete(int id);
+    Task<bool> Delete(int id);
 
-    bool Update(Pizza pizza);
+    Task<bool> Update(Pizza pizza);
 }

@@ -1,59 +1,45 @@
-﻿using PizzaProject.Models;
+﻿using System.Collections.Immutable;
+using Microsoft.EntityFrameworkCore;
+using PizzaProject.Models;
 
 namespace PizzaProject.Services;
 
-public class PizzaService : IPizzaService
+public class PizzaService(PizzaContext context) : IPizzaService
 {
-    private readonly List<Pizza> _pizzas =
-    [
-        new()
-        {
-            Id = 1,
-            Name = "Pepperoni",
-            IsGlutenFree = false
-        },
-        new()
-        {
-            Id = 2,
-            Name = "Margherita",
-            IsGlutenFree = true
-        }
-    ];
+    private readonly PizzaContext _context = context;
 
-    private int _nextId;
+    public async Task<IReadOnlyList<Pizza>> GetAll() => await _context.Pizzas.ToListAsync();
 
-    public PizzaService() => _nextId = _pizzas.Max(p => p.Id) + 1; //чому не дивитись тоді просто довжину списку? хіба ід можуть повторюватись? 
+    public async Task<Pizza?> Get(int id) => await _context.Pizzas.FirstOrDefaultAsync(p => p.Id == id);
 
-    public IReadOnlyList<Pizza> GetAll() => _pizzas;
-
-    public Pizza? Get(int id) => _pizzas.FirstOrDefault(p => p.Id == id);
-
-    public void Add(Pizza pizza)
+    public async Task Add(Pizza pizza)
     {
-        pizza.Id = _nextId++;
-        _pizzas.Add(pizza);
+        _context.Pizzas.Add(pizza);
+        await _context.SaveChangesAsync();
     }
 
-    public bool Delete(int id)
+    public async Task<bool> Delete(int id)
     {
-        var pizza = Get(id);
+        var pizza = await Get(id);
 
         if (pizza == null)
             return false;
 
-        _pizzas.Remove(pizza);
+        _context.Pizzas.Remove(pizza);
+        await _context.SaveChangesAsync();
 
         return true;
     }
 
-    public bool Update(Pizza pizza)
+    public async Task<bool> Update(Pizza pizza)
     {
-        var index = _pizzas.FindIndex(p => p.Id == pizza.Id);
+        var foundPizza = await _context.Pizzas.FindAsync(pizza.Id);
 
-        if (index == -1)
+        if (foundPizza == null)
             return false;
 
-        _pizzas[index] = pizza;
+        _context.Entry(foundPizza).CurrentValues.SetValues(pizza);
+        await _context.SaveChangesAsync();
 
         return true;
     }
