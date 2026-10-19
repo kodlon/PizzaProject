@@ -1,20 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Options;
 
 namespace PizzaProject.Utils;
 
-public static class MyJPIF
+/// <summary>
+/// Builds the Newtonsoft-based input formatter that handles "application/json-patch+json"
+/// requests, so the rest of the API can keep using System.Text.Json.
+/// </summary>
+public static class JsonPatchInputFormatterFactory
 {
-    public static NewtonsoftJsonPatchInputFormatter GetJsonPatchInputFormatter()
+    public static NewtonsoftJsonPatchInputFormatter Create()
     {
-        var builder = new ServiceCollection()
+        var provider = new ServiceCollection()
             .AddLogging()
             .AddMvc()
             .AddNewtonsoftJson()
             .Services.BuildServiceProvider();
 
-        return builder
+        return provider
             .GetRequiredService<IOptions<MvcOptions>>()
             .Value
             .InputFormatters

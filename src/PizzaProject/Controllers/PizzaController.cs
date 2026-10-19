@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using PizzaProject.Models;
 using PizzaProject.Services;
@@ -10,28 +10,25 @@ namespace PizzaProject.Controllers;
 public class PizzaController(IPizzaService pizzaService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Pizza>>> GetAll() => Ok( await pizzaService.GetAll());
+    public async Task<ActionResult<IReadOnlyList<Pizza>>> GetAll() => Ok(await pizzaService.GetAllAsync());
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Pizza>> Get(int id)
     {
-        var pizza = await pizzaService.Get(id);
+        var pizza = await pizzaService.GetAsync(id);
 
-        if (pizza != null)
-            return pizza;
+        if (pizza is null)
+            return NotFound();
 
-        return NotFound();
+        return pizza;
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(Pizza pizza)
     {
-        await pizzaService.Add(pizza);
+        await pizzaService.AddAsync(pizza);
 
-        return CreatedAtAction(nameof(Get), new
-        {
-            id = pizza.Id
-        }, pizza);
+        return CreatedAtAction(nameof(Get), new { id = pizza.Id }, pizza);
     }
 
     [HttpPut("{id:int}")]
@@ -40,26 +37,23 @@ public class PizzaController(IPizzaService pizzaService) : ControllerBase
         if (id != pizza.Id)
             return BadRequest();
 
-        return await pizzaService.Update(pizza) ? NoContent() : NotFound();
+        return await pizzaService.UpdateAsync(pizza) ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        if (await pizzaService.Delete(id))
-            return NoContent();
-
-        return NotFound();
-    }
+    public async Task<IActionResult> Delete(int id) =>
+        await pizzaService.DeleteAsync(id) ? NoContent() : NotFound();
 
     [HttpPatch("{id:int}")]
     public async Task<IActionResult> JsonPatch(int id, [FromBody] JsonPatchDocument<Pizza> patch)
     {
-        var existingPizza = await pizzaService.Get(id);
+        var existingPizza = await pizzaService.GetAsync(id);
 
         if (existingPizza is null)
             return NotFound();
 
+        // Patch a copy: applying straight to the stored entity would persist
+        // changes that validation is about to reject.
         var candidatePizza = new Pizza
         {
             Id = existingPizza.Id,
@@ -78,7 +72,7 @@ public class PizzaController(IPizzaService pizzaService) : ControllerBase
         if (!TryValidateModel(candidatePizza))
             return ValidationProblem(ModelState);
 
-        await pizzaService.Update(candidatePizza);
+        await pizzaService.UpdateAsync(candidatePizza);
 
         return Ok(candidatePizza);
     }
