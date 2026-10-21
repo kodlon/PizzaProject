@@ -23,7 +23,8 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
     [Fact]
     public async Task Create_ValidPizza_ReturnsCreatedWithGeneratedId()
     {
-        var response = await _client.PostAsJsonAsync(PizzaRoute, new Pizza { Name = "Margherita" });
+        const string pizzaName = "BANANA";
+        var response = await _client.PostAsJsonAsync(PizzaRoute, new Pizza { Name = pizzaName });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -31,30 +32,33 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
 
         Assert.NotNull(created);
         Assert.NotEqual(0, created.Id);
-        Assert.Equal("Margherita", created.Name);
+        Assert.Equal(pizzaName, created.Name);
     }
 
     [Fact]
     public async Task Update_ExistingPizza_ReturnsNoContentAndPersistsChanges()
     {
+        const string pizzaName = "Cheese";
         var created = await CreatePizzaAsync("Pepperoni");
 
         var response = await _client.PutAsJsonAsync(
             $"{PizzaRoute}/{created.Id}",
-            new Pizza { Id = created.Id, Name = "Diavola", IsGlutenFree = true });
+            new Pizza { Id = created.Id, Name = pizzaName, IsGlutenFree = true });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         var stored = await GetPizzaAsync(created.Id);
 
-        Assert.Equal("Diavola", stored.Name);
+        Assert.Equal(pizzaName, stored.Name);
         Assert.True(stored.IsGlutenFree);
     }
 
     [Fact]
     public async Task Patch_EmptyName_ReturnsBadRequestAndLeavesPizzaUnchanged()
     {
-        var created = await CreatePizzaAsync("Hawaiian");
+        const string pizzaName = "BANANA";
+
+        var created = await CreatePizzaAsync(pizzaName);
 
         var response = await PatchAsync(created.Id, """[{ "op": "replace", "path": "/name", "value": "" }]""");
 
@@ -62,7 +66,7 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
 
         var stored = await GetPizzaAsync(created.Id);
 
-        Assert.Equal("Hawaiian", stored.Name);
+        Assert.Equal(pizzaName, stored.Name);
     }
 
     [Fact]
