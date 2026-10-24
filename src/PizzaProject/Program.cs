@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PizzaProject.Data;
+using PizzaProject.Infrastructure;
 using PizzaProject.Services;
 using PizzaProject.Utils;
 
@@ -19,7 +20,13 @@ builder.Services.AddScoped<IPizzaService, PizzaService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Exception handling
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

@@ -3,8 +3,12 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using PizzaProject.Data;
 using PizzaProject.Dtos;
+using PizzaProject.Services;
 
 namespace PizzaProject.Tests;
 
@@ -153,6 +157,28 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
 
         Assert.Equal("MELON", stored.Name);
         Assert.False(stored.IsGlutenFree);
+    }
+
+    [Fact]
+    public async Task GetAll_ServiceThrows_ReturnsProblemDetailsWithoutLeakingMessage()
+    {
+        const string message = "BIG PROBLEM";
+        var pizzaServiceStub = Substitute.For<IPizzaService>();
+        pizzaServiceStub.GetAllAsync().ThrowsAsync(new Exception(message));
+        var factoryStub = factory.WithWebHostBuilder(builder => 
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IPizzaService>();
+                services.AddSingleton(pizzaServiceStub);
+            }));
+        
+        var client = factoryStub.CreateClient();
+        
+        var response = await client.GetAsync(PizzaRoute);
+        
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.DoesNotContain(message, await response.Content.ReadAsStringAsync());
     }
 
     private async Task<PizzaResponse> CreatePizzaAsync(string name, bool isGlutenFree)

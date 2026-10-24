@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using PizzaProject.Dtos;
-using PizzaProject.Models;
 using PizzaProject.Services;
-using PizzaProject.Utils;
 
 namespace PizzaProject.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")] 
 public class PizzaController(IPizzaService pizzaService) : ControllerBase
 {
     [HttpGet]
