@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,12 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
     private const string PizzaRoute = "/api/pizza";
     private const string JsonPatchMediaType = "application/json-patch+json";
 
-    private readonly HttpClient _client = factory.CreateClient();
+    private const string AdminRole = "Admin";
+
+    // Most tests act as a signed-in user without roles; access tests pick another client explicitly.
+    private readonly HttpClient _client = CreateClient(factory, signedIn: true);
+    private readonly HttpClient _anonymousClient = CreateClient(factory, signedIn: false);
+    private readonly HttpClient _adminClient = CreateClient(factory, signedIn: true, role: AdminRole);
 
     [Fact]
     public async Task Get_UnknownId_ReturnsNotFound()
@@ -179,6 +185,47 @@ public class PizzaApiTests(PizzaApiFactory factory) : IClassFixture<PizzaApiFact
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         Assert.DoesNotContain(message, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Create_Anonymous_ReturnsUnauthorized()
+    {
+        var response = await _anonymousClient.PostAsJsonAsync(PizzaRoute, new CreatePizzaRequest("Nobody's pizza", false));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_AsUserWithoutAdminRole_ReturnsForbidden()
+    {
+        var created = await CreatePizzaAsync("Protected pizza", false);
+
+        var response = await _client.DeleteAsync($"{PizzaRoute}/{created.Id}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync($"{PizzaRoute}/{created.Id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_AsAdmin_RemovesPizza()
+    {
+        var created = await CreatePizzaAsync("Doomed pizza", false);
+
+        var response = await _adminClient.DeleteAsync($"{PizzaRoute}/{created.Id}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"{PizzaRoute}/{created.Id}")).StatusCode);
+    }
+
+    private static HttpClient CreateClient(PizzaApiFactory factory, bool signedIn, string? role = null)
+    {
+        var client = factory.CreateClient();
+
+        // "Authorization: Test <role>" — see TestAuthenticationHandler.
+        if (signedIn)
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthenticationHandler.SchemeName, role);
+
+        return client;
     }
 
     private async Task<PizzaResponse> CreatePizzaAsync(string name, bool isGlutenFree)

@@ -17,6 +17,7 @@ Accept: application/json
 
 POST {{PizzaProject_HostAddress}}/api/pizza/
 Content-Type: application/json
+Authorization: Bearer {{JWT.ihor.TOKEN}}
 
 {
   "name": "Hawaii",
@@ -27,6 +28,7 @@ Content-Type: application/json
 
 PUT {{PizzaProject_HostAddress}}/api/pizza/3
 Content-Type: application/json
+Authorization: Bearer {{JWT.ihor.TOKEN}}
 
 {
   "id": 3,
@@ -42,6 +44,7 @@ Accept: application/json
 ###
 
 DELETE {{PizzaProject_HostAddress}}/api/pizza/3
+Authorization: Bearer {{JWT.boss.TOKEN}}
 
 ###
 
@@ -52,5 +55,6 @@ Accept: application/json
 
 PATCH {{PizzaProject_HostAddress}}/api/pizza/1
 Content-Type: application/json-patch+json
+Authorization: Bearer {{JWT.ihor.TOKEN}}
 
 [{"op":"replace","path":"/name","value":"Diavola"}]

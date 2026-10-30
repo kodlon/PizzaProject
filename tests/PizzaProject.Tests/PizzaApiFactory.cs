@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -22,6 +23,13 @@ public class PizzaApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<DbContextOptions<PizzaContext>>();
             services.AddDbContext<PizzaContext>(options => options.UseSqlite(_connection));
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;
+                    options.DefaultChallengeScheme = TestAuthenticationHandler.SchemeName;
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                    TestAuthenticationHandler.SchemeName, _ => { });
         });
     }
 
