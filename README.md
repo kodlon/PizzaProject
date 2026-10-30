@@ -76,9 +76,25 @@ dotnet user-jwts create --name alice                # regular user
 dotnet user-jwts create --name admin --role Admin   # admin
 ```
 
-Send the token in the `Authorization: Bearer <token>` header. Ready-made requests are in
-[`PizzaProject.http`](src/PizzaProject/PizzaProject.http); put the tokens into
-`http-client.private.env.json` next to it (this file is git-ignored).
+Send the token in the `Authorization: Bearer <token>` header.
+
+Ready-made requests are in [`PizzaProject.http`](src/PizzaProject/PizzaProject.http). It reads
+the tokens from `{{UserToken}}` and `{{AdminToken}}`. Put them into a git-ignored file next to the
+committed `http-client.env.json`:
+
+- **Rider:** `src/PizzaProject/http-client.private.env.json`
+- **Visual Studio:** `src/PizzaProject/http-client.env.json.user`
+
+```json
+{
+  "dev": {
+    "UserToken": "<token for alice>",
+    "AdminToken": "<token for admin>"
+  }
+}
+```
+
+Then pick the `dev` environment in the request editor.
 
 ## Running tests
 
