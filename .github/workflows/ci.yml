@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      # The test project references the API project, so this builds and tests both.
+      # The .slnx solution format needs SDK 9.0.200+, hence the explicit project path.
+      - name: Restore
+        run: dotnet restore tests/PizzaProject.Tests/PizzaProject.Tests.csproj
+
+      - name: Build
+        run: dotnet build tests/PizzaProject.Tests/PizzaProject.Tests.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test tests/PizzaProject.Tests/PizzaProject.Tests.csproj --no-build --configuration Release --verbosity normal

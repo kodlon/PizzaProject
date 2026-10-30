@@ -9,8 +9,10 @@ public class GlobalExceptionHandler(
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "Error VERY BAD!!!");
+        logger.LogError(exception, "Unhandled exception while processing {Method} {Path}",
+            httpContext.Request.Method, httpContext.Request.Path);
 
+        // The client gets a generic message only; details stay in the server log, linked by traceId.
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {
             Exception = exception,
@@ -18,8 +20,8 @@ public class GlobalExceptionHandler(
             ProblemDetails = new ProblemDetails
             {
                 Status = StatusCodes.Status500InternalServerError,
-                Title = "TOTAL SERVER ERROR YOU ARE GOING TO EXPLODE!!!@!",
-                Detail = "NOOOOOOOOOOOOOO HOW CAN I NOT WORK!!!!!."
+                Title = "An unexpected error occurred.",
+                Detail = "The server could not process the request. Please include the traceId when reporting this issue."
             }
         });
     }
